@@ -187,6 +187,21 @@ function todayKey(){const d=new Date();return [d.getFullYear(),String(d.getMonth
 function dailyCount(){return state.dailyAnswers[todayKey()]||0}
 function recordCorrect(){const k=todayKey();state.dailyAnswers[k]=(state.dailyAnswers[k]||0)+1}
 let audioContext;
+function unlockStudyAudio(){
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+  audioContext ||= new AC();
+  if(audioContext.state==='suspended')audioContext.resume().catch(e=>console.warn('Audio unlock failed:',e));
+  // Start a silent oscillator inside the actual touch/click gesture.
+  const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+  gain.gain.value=0;osc.connect(gain);gain.connect(audioContext.destination);
+  osc.start();osc.stop(audioContext.currentTime+.01);
+ }catch(e){console.warn('Audio initialization failed:',e)}
+}
+document.addEventListener('pointerdown',unlockStudyAudio,{once:true,capture:true});
+document.addEventListener('touchstart',unlockStudyAudio,{once:true,capture:true,passive:true});
+document.addEventListener('keydown',unlockStudyAudio,{once:true,capture:true});
 async function playSound(kind){
  try{
   const AC=window.AudioContext||window.webkitAudioContext;
@@ -460,7 +475,7 @@ function act(action){
  rememberPosition();
 }
 document.onchange=e=>{const input=e.target;if(input.matches('.options input, .exam-choice input')){const action=input.dataset.action;act(action);document.querySelector('.options input[data-action="'+action+'"]')?.focus({preventScroll:true})}};
-document.onclick=e=>{if(e.target.closest('#install-help')||e.target.closest('#install-app'))return;const b=e.target.closest('button');if(!b||b.disabled)return;const action=b.dataset.action||'outline';if(action==='check'||action==='review-check'){b.disabled=true;try{act(action)}catch(err){b.disabled=false;throw err}return}act(action)};
+document.onclick=e=>{unlockStudyAudio();if(e.target.closest('#install-help')||e.target.closest('#install-app'))return;const b=e.target.closest('button');if(!b||b.disabled)return;const action=b.dataset.action||'outline';if(action==='check'||action==='review-check'){b.disabled=true;try{act(action)}catch(err){b.disabled=false;throw err}return}act(action)};
 let scrollSave;
 window.addEventListener('scroll',()=>{clearTimeout(scrollSave);scrollSave=setTimeout(rememberPosition,200)},{passive:true});
 window.addEventListener('pagehide',rememberPosition);
