@@ -294,7 +294,7 @@ function startReview(){
 }
 function renderReview(){
  const session=state.reviewSession,items=session?.items||[],a=items[session?.pos||0];
- if(!a)return '<h2>Review complete</h2><p>You have finished this targeted review. Keep practicing to strengthen the concepts that still need work.</p>'+btn('outline','Return to course outline','primary')+btn('review-start','Review more weak areas');
+ if(!a)return '<h2>Review complete</h2><p>You have finished this targeted review. Keep practicing to strengthen the concepts that still need work.</p>'+'<div class="row">'+btn('outline','Return to course outline','primary')+btn('review-start','Review more weak areas')+'</div>';
  const [prompt,choices,answer,why]=a.q,correct=[answer].flat();
  return '<small>Targeted review · '+(session.pos+1)+' of '+items.length+' · Lesson '+(a.n+1)+'</small><h2>'+esc(prompt)+'</h2><p>'+esc(course[a.n].sections[a.j].objectives[a.k])+'</p><fieldset class="options"><legend class="sr-only">Choose your answer</legend>'+choices.map((choice,i)=>'<label class="option-card '+(a.locked&&correct.includes(i)?'answer-key':'')+'"><input name="review-answer" data-action="review-pick-'+i+'" type="'+(Array.isArray(answer)?'checkbox':'radio')+'" '+(a.pick.includes(i)?'checked ':'')+(a.locked?'disabled':'')+'>'+esc(choice)+'</label>').join('')+'</fieldset>'+(a.locked?'<div class="feedback"><strong>'+(a.right?'Correct!':'Not quite.')+'</strong><p>'+esc(why)+'</p></div>'+btn('review-next',session.pos===items.length-1?'Finish review':'Next question →','primary'):btn('review-check','Check answer','primary',!a.pick.length));
 }
