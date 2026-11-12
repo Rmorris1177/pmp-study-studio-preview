@@ -182,13 +182,13 @@ const savedState=read(key);
 let returning=!!savedState&&Object.values(savedState.runs||{}).some(r=>r?.rounds?.some(x=>x.pos>0||x.rows?.some(y=>y.locked||y.pick?.length)));
 let state=savedState||{lesson:0,section:0,view:'learn',runs:{},history:{}};
 state.weakTopics ||= {}; state.reviewSession ||= null;
-state.soundEnabled ??= true; state.dailyAnswers ||= {};
+delete state.soundEnabled; state.dailyAnswers ||= {};
 function todayKey(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function dailyCount(){return state.dailyAnswers[todayKey()]||0}
 function recordCorrect(){const k=todayKey();state.dailyAnswers[k]=(state.dailyAnswers[k]||0)+1}
 let audioContext;
 function playSound(kind){
- if(!state.soundEnabled)return;
+ 
  try{
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   audioContext ||= new AC();if(audioContext.state==='suspended')audioContext.resume();
@@ -197,8 +197,6 @@ function playSound(kind){
    osc.type='sine';osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.10,t+.018);gain.gain.exponentialRampToValueAtTime(.0001,t+(kind==='victory'?.38:kind==='incorrect'?.20:.14));osc.connect(gain);gain.connect(audioContext.destination);osc.start(t);osc.stop(t+(kind==='victory'?.4:kind==='incorrect'?.22:.16));});
  }catch(e){}
 }
-function studyControls(){return '<div class="study-controls" style="margin:14px 0 20px"><span>Answer sounds</span> '+btn('toggle-sound',state.soundEnabled?'Sound: On 🔊':'Sound: Off 🔇')+'</div>'}
-
 // Exam simulator runs independently from lesson and smart-review records.
 state.exam ||= null;
 function examPool(){return course.flatMap((lesson,n)=>lesson.sections.flatMap((section,j)=>section.qs.map((q,k)=>({n,j,k,q}))));}
@@ -359,7 +357,7 @@ function render(){
  }else if(state.view==='exam'){title='Practice Exam Simulator';sub='Mixed questions across the course';body=renderExam();
  }else if(state.view==='outline'){
  title='Course outline';sub='Choose a lesson, then study one round at a time.';tag='Independent PMP exam preparation';
- body=readinessDashboard()+studyControls()+'<section class="exam-panel"><h2>Practice exam simulator</h2><p>Mixed practice across all lessons, with optional timing and detailed results.</p>'+btn('exam-open','Open exam simulator','primary')+'</section>'+course.map((x,i)=>'<details class="lessonitem" '+(i===n?'open':'')+'><summary><strong>Lesson '+(i+1)+' · '+esc(x.title)+'</strong><span class="lesson-status">'+esc(lessonStatus(i))+'</span></summary><p>'+esc(x.intro)+'</p>'+x.sections.map((z,h)=>btn('open-'+i+'-'+h,z.title,'sidebutton')).join('')+(finishedRun(state.runs[i])?btn('retake-'+i,'Retake lesson'):state.achievements[i]&&state.runs[i]?btn('resume-'+i,'Resume retake'):hasWork(state.runs[i])?btn('resume-'+i,'Resume lesson'):'')+'</details>').join('');
+ body=readinessDashboard()+'<section class="exam-panel"><h2>Practice exam simulator</h2><p>Mixed practice across all lessons, with optional timing and detailed results.</p>'+btn('exam-open','Open exam simulator','primary')+'</section>'+course.map((x,i)=>'<details class="lessonitem" '+(i===n?'open':'')+'><summary><strong>Lesson '+(i+1)+' · '+esc(x.title)+'</strong><span class="lesson-status">'+esc(lessonStatus(i))+'</span></summary><p>'+esc(x.intro)+'</p>'+x.sections.map((z,h)=>btn('open-'+i+'-'+h,z.title,'sidebutton')).join('')+(finishedRun(state.runs[i])?btn('retake-'+i,'Retake lesson'):state.achievements[i]&&state.runs[i]?btn('resume-'+i,'Resume retake'):hasWork(state.runs[i])?btn('resume-'+i,'Resume lesson'):'')+'</details>').join('');
  }else if(state.view==='learn'){
  title=s.title;sub=l.intro;
  body='<small>Round '+(j+1)+' of 3 · Five questions</small><h2>Essential notes</h2><div class="study-notes">'+s.notes.map(([h,t])=>'<h3>'+esc(h)+'</h3><p>'+esc(t)+'</p>'+noteExpansion(h,t)).join('')+(supplements[n]?.[j]?'<p>'+supplements[n][j]+'</p>':'')+'</div>'+(s.visual||'')+lessonVisuals(n,j)+lessonAcronyms(n,j)+roundSources(s)+(n===3&&j===1?reserve:n===3&&j===2?chart:'')+btn('practice',round.pos===5?'View score':round.pos||a?.locked||a?.pick.length?'Resume practice →':'Start practice →','primary');
@@ -425,7 +423,6 @@ function act(action){
  else if(action.startsWith('exam-pick-')&&state.view==='exam'&&state.exam&&!state.exam.finishedAt){const item=state.exam.items[state.exam.pos],v=Number(action.slice(10));item.pick=Array.isArray(item.q[2])?(item.pick.includes(v)?item.pick.filter(x=>x!==v):[...item.pick,v]):[v]}
  else if(action==='exam-next'&&state.view==='exam'&&state.exam&&!state.exam.finishedAt){const e=state.exam,item=e.items[e.pos];if(item.pick.length){item.locked=true;if(e.pos===e.items.length-1)e.finishedAt=Date.now();else e.pos++}}
  else if(action==='exam-finish'&&state.view==='exam'&&state.exam){state.exam.finishedAt=Date.now()}
- else if(action==='toggle-sound'){state.soundEnabled=!state.soundEnabled}
  else if(action==='review-start'){startReview()}
  else if(action.startsWith('review-pick-')&&state.view==='review'){const a=state.reviewSession?.items[state.reviewSession.pos];if(a&&!a.locked){const k=+action.slice(12);a.pick=Array.isArray(a.q[2])?(a.pick.includes(k)?a.pick.filter(v=>v!==k):a.pick.concat(k)):[k]}}
  else if(action==='review-check'&&state.view==='review'){const a=state.reviewSession?.items[state.reviewSession.pos];if(a&&!a.locked&&a.pick.length){const correct=[a.q[2]].flat();a.right=a.pick.length===correct.length&&correct.every(k=>a.pick.includes(k));a.locked=true;playSound(a.right?'correct':'incorrect');const v=state.weakTopics[a.key];if(v){if(a.right)v.recovered=Math.min(v.misses,v.recovered+1);else v.misses++;v.lastQuestion=a.id}}}
