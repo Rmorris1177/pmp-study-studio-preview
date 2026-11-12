@@ -384,6 +384,7 @@ function render(){
  }).join('')+'</fieldset>';
  body+=a.locked?'<div role="status" class="feedback '+(a.right?'feedback-success':'')+'">'+(a.right?'<strong>Correct.</strong><p>'+esc(why)+'</p>':'<strong>Incorrect. The correct '+(answers.length===1?'answer is ':'answers are ')+letters+'.</strong><p>'+esc(why)+'</p>')+'</div><p>'+btn('next',round.pos===4?'Finish round':'Next question →','primary')+'</p>':btn('check','Check answer','primary',!a.pick.length);
  }
+ if(!returning && state.view!=='outline' && state.view!=='exam')body=studyControls()+body;
  el('card').innerHTML='<section class="cover"><small>'+esc(tag)+'</small><h1>'+esc(title)+'</h1><p>'+esc(sub)+'</p></section><section>'+body+'</section>';
 }
 function celebrateCompletion(points){
