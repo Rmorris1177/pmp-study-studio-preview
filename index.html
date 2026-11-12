@@ -150,7 +150,7 @@ function acronymsForLesson(n){
 function lessonAcronyms(n,j){
  if(j!==0)return '';
  const terms=acronymsForLesson(n);
- return terms.length?'<details class="round-sources acronym-guide"><summary>Acronyms ('+terms.length+')</summary><p>Introduced in this lesson · acronym first, full meaning second.</p><dl>'+terms.map(a=>'<div class="acronym-entry"><dt>'+esc(a)+'</dt><dd>'+esc(acronymDefinitions[a])+'</dd></div>').join('')+'</dl></details>':'';
+ return terms.length?'<details class="round-sources acronym-guide"><summary>Acronyms ('+terms.length+')</summary><dl>'+terms.map(a=>'<div class="acronym-entry"><dt>'+esc(a)+'</dt><dd>'+esc(acronymDefinitions[a])+'</dd></div>').join('')+'</dl></details>':'';
 }
 const noteDeepDives={
  'stakeholder':'Consider both influence and interest. A stakeholder with high influence and high interest usually needs close engagement, while someone with low interest may need only periodic updates.',
